@@ -12,6 +12,8 @@
 }
 
 #send-btn {
+    background: $primary;
+    color: white;
     width: 12;
 }
 
@@ -22,7 +24,7 @@
 .pane {
     width: 1fr;
     height: 1fr;
-    border: solid green;
+    border: solid $accent;
     margin: 0 1;
 }
 
@@ -37,4 +39,22 @@
     height: 1;
     margin: 0 1;
     text-style: bold;
+}
+
+.script-status {
+    text-style: bold;
+    background: $accent;
+    color: $text;
+    padding: 0 1;
+    width: 100%;
+}
+
+.script-success {
+    background: #007200;
+    color: black;
+}
+
+.script-failed {
+    background: red;
+    color: white;
 }
