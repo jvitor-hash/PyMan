@@ -1,7 +1,7 @@
 # PyMan
 A simple http request TUI (Terminal User Interface) tool that can make web requests to any url.
 
-# Installation
+### Installation
 ```console
 pip install textual httpx
 ```
