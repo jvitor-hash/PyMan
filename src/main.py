@@ -5,8 +5,9 @@ from textual.containers import Horizontal, Vertical
 from textual.widgets import Button, Header, Input, Label, Select, TextArea
 
 
-class TUIApp(App):
+class PyMan(App):
     CSS_PATH="css/global.tcss"
+    TITLE="PyMan"
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -44,6 +45,10 @@ class TUIApp(App):
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "send-btn":
             await self.make_request()
+
+    async def on_input_submitted(self, event: Input.Submitted) -> None:
+            if event.input.id == "url-input":
+                await self.make_request()
 
     async def make_request(self) -> None:
         method = self.query_one("#method-select", Select).value
@@ -92,5 +97,5 @@ class TUIApp(App):
 
 
 if __name__ == "__main__":
-    app = TUIApp()
+    app = PyMan()
     app.run()
