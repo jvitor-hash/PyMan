@@ -11,12 +11,6 @@
     width: 1fr;
 }
 
-#send-btn {
-    background: $primary;
-    color: white;
-    width: 12;
-}
-
 #main-container {
     height: 1fr;
 }
@@ -39,6 +33,28 @@
     height: 1;
     margin: 0 1;
     text-style: bold;
+}
+
+.secondary-tabs {
+    margin-left: 1;
+}
+
+Switch {
+    width: auto;
+    height: auto;
+}
+
+.switch-label {
+    height: 3;
+    align: center middle;
+    width: auto;
+}
+
+.cookies-switch {
+    align: left middle;
+    width: auto;
+    height: auto;
+    column-span: 2;
 }
 
 .script-status {
