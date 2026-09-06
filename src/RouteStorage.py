@@ -79,6 +79,8 @@ def load_routes_from_file(self) -> None:
                 self.saved_routes = json.load(f)
 
             list_view = self.query_one("#saved-routes-list", ListView)
+            list_view.clear()  # Clear existing items to prevent duplicate ID crashes
+
             for route_id, route in self.saved_routes.items():
                 # Track route counter ID to prevent key collisions
                 try:

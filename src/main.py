@@ -36,6 +36,8 @@ class PyMan(App):
         self.route_counter = 0
         self.cookie_counter = 0
 
+        self.call_after_refresh(lambda: load_routes_from_file(self))
+
     def compose(self) -> ComposeResult:
         yield Header()
 
@@ -123,6 +125,10 @@ class PyMan(App):
                     classes="pane",
                 )
 
+    def on_key(self, event) -> None:
+        if event.key == "escape":
+            self.clear_route_selection()
+
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         btn_id = event.button.id or ""
 
@@ -136,6 +142,9 @@ class PyMan(App):
             route_id = btn_id.replace("edit_", "")
             if route_id in self.saved_routes:
                 route = self.saved_routes[route_id]
+
+                # Explicitly set active_route_id ONLY when Edit is clicked
+                self.active_route_id = route_id
 
                 # Overwrite saved entry with current input fields
                 route["method"] = self.query_one("#method-select", Select).value
@@ -185,30 +194,44 @@ class PyMan(App):
             await make_request(self)
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
-        route_id = event.item.id
-        if route_id in self.saved_routes:
-            self.active_route_id = route_id
-            route = self.saved_routes[route_id]
+        # Populate the form fields with the selected route's data...
+        selected_id = event.item.id
+        route_data = self.saved_routes.get(selected_id, {})
 
-            # Populate request fields
-            self.query_one("#method-select", Select).value = route["method"]
-            self.query_one("#url-input", Input).value = route["url"]
-            self.query_one("#request-body", TextArea).text = route["body"]
-            self.query_one("#script-input", TextArea).text = route["script"]
-            self.query_one("#input-headers", TextArea).text = route["headers"]
+        self.query_one("#method-select", Select).value = route_data.get("method", "GET")
+        self.query_one("#url-input", Input).value = route_data.get("url", "")
+        self.query_one("#request-body", TextArea).text = route_data.get("body", "")
+        self.query_one("#script-input", TextArea).text = route_data.get("script", "")
+        self.query_one("#input-headers", TextArea).text = route_data.get("headers", "")
 
-            # Render cookies bound to this route
-            route_cookies = route.get("cookies", {})
-            render_cookies_list(self, route_cookies)
+        # Render cookies bound to this route
+        route_cookies = route_data.get("cookies", {})
+        render_cookies_list(self, route_cookies)
 
-            self.query_one("#status-label", Label).update(
-                f"Status: Loaded '{route['url']}'"
-            )
+        self.query_one("#status-label", Label).update(
+            f"Status: Loaded '{route_data['url']}'"
+        )
 
-    async def on_tabbed_content_tab_activated(self, event: TabbedContent.TabActivated) -> None:
-        # Check if the activated tab is "Saved routes"
-        if event.tab.label.plain == "Saved routes":
-            load_routes_from_file(self)
+        # Reset active_route_id so saving creates a NEW route instead of overwriting this one
+        self.active_route_id = None
+
+    def clear_route_selection(self) -> None:
+        """Clears the active route selection and resets input fields."""
+        self.active_route_id = None
+
+        # Clear the active selection highlight in the ListView
+        list_view = self.query_one("#saved-routes-list", ListView)
+        list_view.index = None
+
+        # Reset input fields to default states
+        self.query_one("#method-select", Select).value = "GET"
+        self.query_one("#url-input", Input).value = ""
+        self.query_one("#request-body", TextArea).text = ""
+        self.query_one("#script-input", TextArea).text = ""
+        self.query_one("#input-headers", TextArea).text = ""
+
+        # Status update about the de-selection
+        self.query_one("#status-label", Label).update("Status: Saved route de-selected")
 
     async def on_text_area_changed(self, event: TextArea.Changed) -> None:
         if event.control.language == "python":
