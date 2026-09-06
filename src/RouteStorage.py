@@ -17,15 +17,23 @@ def save_current_route(self) -> None:
         self.query_one("#status-label", Label).update("Status: Cannot save empty URL")
         return
 
-    # Use existing active_route_id or generate a new one
-    if not self.active_route_id or self.active_route_id not in self.saved_routes:
+    # Ensure self.route_counter accounts for all existing saved route IDs
+    for r_id in self.saved_routes:
+        try:
+            num = int(r_id.replace("route_", ""))
+            self.route_counter = max(self.route_counter, num)
+        except ValueError:
+            pass
+
+    # Use existing active_route_id only if it is already in saved_routes
+    if self.active_route_id in self.saved_routes:
+        route_id = self.active_route_id
+        is_new_route = False
+    else:
         self.route_counter += 1
         route_id = f"route_{self.route_counter}"
         self.active_route_id = route_id
         is_new_route = True
-    else:
-        route_id = self.active_route_id
-        is_new_route = False
 
     existing_cookies = self.saved_routes.get(route_id, {}).get("cookies", {})
 

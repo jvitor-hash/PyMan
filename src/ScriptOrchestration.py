@@ -1,9 +1,23 @@
+import ast
 import io
 import sys
 
 import httpx
 from textual.widgets import Label, TextArea
 
+
+# Parses the script before execution to verify structural integrity of the script.
+# (Note: this does not verify the runtime)
+async def parse_script(self) -> None:
+    script_text = self.query_one("#script-input", TextArea).text
+    script_status = self.query_one(".script-status", Label)
+
+    try:
+        ast.parse(script_text)
+    except SyntaxError as e:
+        script_status.update(f"Syntax Error: {e}")
+    else:
+        script_status.update("Script Execution Status")
 
 def execute_script(self, response: httpx.Response | None) -> None:
     script_text = self.query_one("#script-input", TextArea).text.strip()

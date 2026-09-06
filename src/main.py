@@ -210,6 +210,10 @@ class PyMan(App):
         if event.tab.label.plain == "Saved routes":
             load_routes_from_file(self)
 
+    async def on_text_area_changed(self, event: TextArea.Changed) -> None:
+        if event.control.language == "python":
+            await parse_script(self)
+
 if __name__ == "__main__":
     app = PyMan()
     app.run()

@@ -18,5 +18,5 @@ headers
 cookies
 ```
 
-- Version 1.4.1
+- Version 1.4.2
 (note: *Some of the code here are AI generated.*)
