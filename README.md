@@ -1,5 +1,5 @@
 # PyMan
-A simple http request TUI (Terminal User Interface) tool that can make web requests to any url.
+A simple http request TUI (Terminal User Interface) tool that can make web requests to any url. No sign-in required no heavy web interface.
 
 ### Installation
 ```console
@@ -16,5 +16,5 @@ response
 json_data
 ```
 
-- Version 1.2.0
+- Version 1.3.0
 (note: *Some of the code here are AI generated.*)

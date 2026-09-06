@@ -58,3 +58,21 @@
     background: red;
     color: white;
 }
+
+.saved-route-row {
+    height: 3;
+    align: left middle;
+}
+
+.route-label {
+    width: 1fr;
+    height: auto;
+    content-align: left middle;
+}
+
+.action-btn {
+    min-width: 8;
+    height: auto;
+    margin-left: 1;
+    margin-right: 1;
+}
