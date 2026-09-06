@@ -8,8 +8,8 @@ from textual.widgets import (
     ListItem,
     ListView,
     Select,
-    TabPane,
     TabbedContent,
+    TabPane,
     TextArea,
 )
 
@@ -17,7 +17,6 @@ from APIClient import *
 from RouteStorage import *
 from ScriptOrchestration import *
 from views.RenderCookiesList import render_cookies_list
-
 
 DEFAULT_HEADERS = """Accept: */*
 Content-Type: application/json
