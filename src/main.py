@@ -19,7 +19,6 @@ from textual.widgets import (
     TabPane,
     TextArea,
 )
-from typing_extensions import Text
 
 ROUTES_FILE = "saved_routes.json"
 
@@ -453,7 +452,8 @@ class PyMan(App):
             "response": response,
             "status_code": response.status_code if response else None,
             "json_data": json_data,
-            "headers": response.headers
+            "headers": dict(response.headers) if response else {},
+            "cookies": dict(response.cookies) if response else {}
             if response
             and response.headers.get("content-type", "").startswith("application/json")
             else None,

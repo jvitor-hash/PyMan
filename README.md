@@ -14,7 +14,9 @@ PyMan allows you to execute python code to perform actions with the program some
 status_code
 response
 json_data
+headers
+cookies
 ```
 
-- Version 1.4.0
+- Version 1.4.1
 (note: *Some of the code here are AI generated.*)
