@@ -92,3 +92,16 @@ Switch {
     margin-left: 1;
     margin-right: 1;
 }
+
+.cookie-label {
+    width: 1fr;
+    height: auto;
+    content-align: left middle;
+    text-wrap: wrap;
+}
+
+.cookie-row {
+    height: auto;
+    min-height: 3;
+    align: left middle;
+}

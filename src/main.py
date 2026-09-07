@@ -1,5 +1,5 @@
 from textual.app import App, ComposeResult
-from textual.containers import Vertical
+from textual.containers import Horizontal, Vertical
 from textual.widgets import (
     Button,
     Header,
@@ -8,14 +8,15 @@ from textual.widgets import (
     ListItem,
     ListView,
     Select,
+    Switch,
     TabbedContent,
     TabPane,
     TextArea,
 )
 
-from APIClient import *
-from RouteStorage import *
-from ScriptOrchestration import *
+from APIClient import make_request
+from RouteStorage import load_routes_from_file, save_current_route, save_routes_to_file
+from ScriptOrchestration import parse_script
 from views.RenderCookiesList import render_cookies_list
 
 DEFAULT_HEADERS = """Accept: */*
@@ -32,7 +33,7 @@ class PyMan(App):
         # Stores route data indexed by an internal ID key
         self.saved_routes = {}
         self.active_route_id = None
-        self.cookies = {}
+        self.is_editing_route = False  # True when user clicks Edit button
         self.route_counter = 0
         self.cookie_counter = 0
 
@@ -141,29 +142,47 @@ class PyMan(App):
         elif btn_id.startswith("edit_"):
             route_id = btn_id.replace("edit_", "")
             if route_id in self.saved_routes:
-                route = self.saved_routes[route_id]
-
-                # Explicitly set active_route_id ONLY when Edit is clicked
+                # Set active_route_id and editing mode so Save will update this route
                 self.active_route_id = route_id
+                self.is_editing_route = True
 
-                # Overwrite saved entry with current input fields
-                route["method"] = self.query_one("#method-select", Select).value
-                route["url"] = self.query_one("#url-input", Input).value.strip()
-                route["body"] = self.query_one("#request-body", TextArea).text
-                route["script"] = self.query_one("#script-input", TextArea).text
-                route["headers"] = self.query_one("#input-headers", TextArea).text
+                # Populate form fields with the route's current data
+                route = self.saved_routes[route_id]
+                self.query_one("#method-select", Select).value = route.get("method", "GET")
+                self.query_one("#url-input", Input).value = route.get("url", "")
+                self.query_one("#request-body", TextArea).text = route.get("body", "")
+                self.query_one("#script-input", TextArea).text = route.get("script", "")
+                self.query_one("#input-headers", TextArea).text = route.get("headers", "")
 
-                save_routes_to_file(self)
-
-                # Update the displayed text label inside the list item
-                label = self.query_one(f"#{route_id}", ListItem).query_one(
-                    ".route-label", Label
-                )
-                label.update(f"[{route['method']}] {route['url']}")
+                # Render cookies for this route
+                route_cookies = route.get("cookies", {})
+                render_cookies_list(self, route_cookies)
 
                 self.query_one("#status-label", Label).update(
-                    f"Status: Updated '{route['url']}'"
+                    f"Status: Editing '{route['url']}'"
                 )
+
+        # Handle Delete Cookie Button Click
+        elif btn_id.startswith("del_cookie_"):
+            cookies_list = self.query_one("#cookies-list", ListView)
+            cookie_item = None
+
+            # Walk up from the clicked button to find the containing ListItem
+            button_widget = event.button
+            if button_widget is not None:
+                cookie_item = button_widget.ancestor(ListItem)
+
+            cookie_name = None
+            if cookie_item is not None:
+                cookie_name = getattr(cookie_item, "cookie_name", None)
+                cookie_item.remove()
+
+            if cookie_name and self.active_route_id in self.saved_routes:
+                route_cookies = self.saved_routes[self.active_route_id].get("cookies", {})
+                route_cookies.pop(cookie_name, None)
+                save_routes_to_file(self)
+
+            self.query_one("#status-label", Label).update("Status: Cookie deleted")
 
         # Handle Delete Button Click
         elif btn_id.startswith("del_"):
@@ -212,12 +231,14 @@ class PyMan(App):
             f"Status: Loaded '{route_data['url']}'"
         )
 
-        # Reset active_route_id so saving creates a NEW route instead of overwriting this one
-        self.active_route_id = None
+        # Set active_route_id so cookies can be deleted, but not editing mode
+        self.active_route_id = selected_id
+        self.is_editing_route = False
 
     def clear_route_selection(self) -> None:
         """Clears the active route selection and resets input fields."""
         self.active_route_id = None
+        self.is_editing_route = False
 
         # Clear the active selection highlight in the ListView
         list_view = self.query_one("#saved-routes-list", ListView)

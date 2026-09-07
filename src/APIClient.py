@@ -1,11 +1,22 @@
 import json
 
 import httpx
-from textual.widgets import Input, Label, Select, Switch, TextArea
+from textual.widgets import (
+    Input,
+    Label,
+    Select,
+    Switch,
+    TextArea,
+)
 
-from RouteStorage import save_routes_to_file
+from RouteStorage import _append_route_row, save_routes_to_file
 from ScriptOrchestration import execute_script
 from views.RenderCookiesList import render_cookies_list
+
+
+async def _run_script_awaitable(self, response: httpx.Response | None) -> None:
+    """Thin awaitable wrapper around execute_script to keep request handler clean."""
+    await execute_script(self, response)
 
 
 async def make_request(self) -> None:
@@ -41,6 +52,7 @@ async def make_request(self) -> None:
 
     # Retrieve current active route cookies or use empty dict for unsaved route
     current_cookies = {}
+
     if not self.active_route_id:
         self.route_counter += 1
         self.active_route_id = f"route_{self.route_counter}"
@@ -48,6 +60,7 @@ async def make_request(self) -> None:
     if self.active_route_id in self.saved_routes:
         current_cookies = self.saved_routes[self.active_route_id].get("cookies", {})
     else:
+        # New route entry - add to saved_routes AND append UI row
         self.saved_routes[self.active_route_id] = {
             "method": method,
             "url": url,
@@ -56,6 +69,9 @@ async def make_request(self) -> None:
             "headers": headers_data,
             "cookies": {},
         }
+
+        # Append UI row to saved routes list
+        _append_route_row(self, self.active_route_id, method, url)
 
     # Execute HTTP Request
     try:
@@ -69,12 +85,12 @@ async def make_request(self) -> None:
                 timeout=10.0,
             )
 
-            execute_script(self, response)
-            extract_and_render_cookies(self, response)
+            await _run_script_awaitable(self, response)
+            await extract_and_render_cookies(self, response)
 
         # Format Response
         status_label.update(
-            f"Status: {response.status_code} {response.reason_phrase}"
+            f"Status: {response.status_code} {response.reason_phrase}", markup=False
         )
 
         try:
@@ -87,7 +103,7 @@ async def make_request(self) -> None:
         status_label.update(f"Status: Request Failed")
         response_area.text = str(e)
 
-def extract_and_render_cookies(self, response: httpx.Response) -> None:
+async def extract_and_render_cookies(self, response: httpx.Response) -> None:
     """Parses cookies from response and persists them to the active route."""
     save_cookies_enabled = self.query_one("#switch-save-cookies", Switch).value
     if not save_cookies_enabled:
